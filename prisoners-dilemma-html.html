@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    .card {
+      border: 1px solid #ccc;
+      padding: 20px;
+      margin: 20px;
+      border-radius: 8px;
+    }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    
+    .player-box {
+      border: 1px solid #ddd;
+      padding: 15px;
+      border-radius: 4px;
+    }
+    
+    .button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .button:hover {
+      background-color: #1d4ed8;
+    }
+    
+    .result-box {
+      background-color: #f3f4f6;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    
+    .payoff-matrix {
+      background-color: #dbeafe;
+      padding: 15px;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+    
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Prisoner's Dilemma Simulation</h1>
+    
+    <div>
+      <button class="button" onclick="setGameMode('oneshot')">One-Shot Game</button>
+      <button class="button" onclick="setGameMode('iterative')">Iterative Game (5 rounds)</button>
+    </div>
+
+    <div class="grid">
+      <div class="player-box">
+        <h3>Player 1</h3>
+        <p>Score: <span id="player1-score">0</span></p>
+        <div id="player1-controls" class="hidden">
+          <button class="button" onclick="makeChoice('player1', 'defect')">Defect</button>
+          <button class="button" onclick="makeChoice('player1', 'cooperate')">Cooperate</button>
+        </div>
+      </div>
+
+      <div class="player-box">
+        <h3>Player 2</h3>
+        <p>Score: <span id="player2-score">0</span></p>
+        <div id="player2-controls" class="hidden">
+          <button class="button" onclick="makeChoice('player2', 'defect')">Defect</button>
+          <button class="button" onclick="makeChoice('player2', 'cooperate')">Cooperate</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="result" class="result-box hidden">
+      <h3>Round <span id="current-round">1</span> Results:</h3>
+      <p>Player 1 chose: <span id="player1-choice"></span></p>
+      <p>Player 2 chose: <span id="player2-choice"></span></p>
+      <button id="next-round" class="button hidden" onclick="nextRound()">Next Round</button>
+      <button id="play-again" class="button hidden" onclick="resetGame()">Play Again</button>
+    </div>
+
+    <div id="history">
+      <h3>Game History:</h3>
+      <div id="history-list"></div>
+    </div>
+
+    <div id="payoff-matrix" class="payoff-matrix hidden">
+      <h3>Payoff Matrix:</h3>
+      <p>Both Defect: (-10, -10)</p>
+      <p>Both Cooperate: (+10, +10)</p>
+      <p>P1 Defect, P2 Cooperate: (+20, -20)</p>
+      <p>P1 Cooperate, P2 Defect: (-20, +20)</p>
+    </div>
+  </div>
+
+  <script>
+    let gameMode = 'oneshot';
+    let currentRound = 1;
+    const maxRounds = 5;
+    let player1Choice = null;
+    let player2Choice = null;
+    let scores = { player1: 0, player2: 0 };
+    let gameHistory = [];
+    let gameState = 'player1';
+
+    const payoffMatrix = {
+      defect: {
+        defect: [-10, -10],
+        cooperate: [20, -20]
+      },
+      cooperate: {
+        defect: [-20, 20],
+        cooperate: [10, 10]
+      }
+    };
+
+    function setGameMode(mode) {
+      gameMode = mode;
+      resetGame();
+    }
+
+    function resetGame() {
+      player1Choice = null;
+      player2Choice = null;
+      gameState = 'player1';
+      currentRound = 1;
+      scores = { player1: 0, player2: 0 };
+      gameHistory = [];
+      updateUI();
+    }
+
+    function makeChoice(player, choice) {
+      if (player === 'player1') {
+        player1Choice = choice;
+        gameState = 'player2';
+      } else {
+        player2Choice = choice;
+        gameState = 'result';
+        
+        const p1Score = payoffMatrix[choice][player1Choice][1];
+        const p2Score = payoffMatrix[player1Choice][choice][0];
+        
+        scores.player1 += p1Score;
+        scores.player2 += p2Score;
+        
+        gameHistory.push({
+          round: currentRound,
+          player1: player1Choice,
+          player2: choice,
+          p1Score,
+          p2Score
+        });
+      }
+      updateUI();
+    }
+
+    function nextRound() {
+      if (gameMode === 'iterative' && currentRound < maxRounds) {
+        currentRound++;
+        player1Choice = null;
+        player2Choice = null;
+        gameState = 'player1';
+        updateUI();
+      }
+    }
+
+    function updateUI() {
+      // Update scores
+      document.getElementById('player1-score').textContent = scores.player1;
+      document.getElementById('player2-score').textContent = scores.player2;
+      
+      // Update controls visibility
+      document.getElementById('player1-controls').classList.toggle('hidden', gameState !== 'player1');
+      document.getElementById('player2-controls').classList.toggle('hidden', gameState !== 'player2');
+      
+      // Update result section
+      const resultDiv = document.getElementById('result');
+      resultDiv.classList.toggle('hidden', gameState !== 'result');
+      
+      if (gameState === 'result') {
+        document.getElementById('current-round').textContent = currentRound;
+        document.getElementById('player1-choice').textContent = player1Choice;
+        document.getElementById('player2-choice').textContent = player2Choice;
+        
+        const isGameOver = gameMode === 'oneshot' || currentRound === maxRounds;
+        document.getElementById('next-round').classList.toggle('hidden', isGameOver);
+        document.getElementById('play-again').classList.toggle('hidden', !isGameOver);
+        document.getElementById('payoff-matrix').classList.toggle('hidden', !isGameOver);
+      }
+      
+      // Update history
+      const historyList = document.getElementById('history-list');
+      historyList.innerHTML = gameHistory.map(round => 
+        `<div>Round ${round.round}: P1 ${round.player1} (${round.p1Score}), P2 ${round.player2} (${round.p2Score})</div>`
+      ).join('');
+    }
+
+    // Initialize the game
+    resetGame();
+  </script>
+</body>
+</html>
