@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f0f0f0;
+    }
+    .game-container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .battlefield {
+      display: flex;
+      align-items: center;
+      margin: 10px 0;
+      gap: 10px;
+    }
+    .troops-input {
+      width: 60px;
+      padding: 5px;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    .win { background: #d4edda; }
+    .lose { background: #f8d7da; }
+    .tie { background: #fff3cd; }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 10px;
+      margin-right: 10px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    button.reset {
+      background: #6c757d;
+    }
+    button.reset:hover {
+      background: #5a6268;
+    }
+    .visualization {
+      display: flex;
+      gap: 10px;
+      margin: 10px 0;
+    }
+    .battle {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .troops {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+    .player-troops, .computer-troops {
+      height: 100px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .troop-bar {
+      background: #007bff;
+      width: 40px;
+      transition: height 0.5s;
+    }
+    .computer-bar {
+      background: #dc3545;
+    }
+    .buttons {
+      display: flex;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <h1>General Blotto Simulation</h1>
+    <p>Distribute 10 troops across 3 battlefields. The computer will do the same. Win more battlefields to win the game!</p>
+    
+    <div id="battlefields">
+      <div class="battlefield">
+        Battlefield 1: <input type="number" class="troops-input" min="0" max="10" value="0">
+      </div>
+      <div class="battlefield">
+        Battlefield 2: <input type="number" class="troops-input" min="0" max="10" value="0">
+      </div>
+      <div class="battlefield">
+        Battlefield 3: <input type="number" class="troops-input" min="0" max="10" value="0">
+      </div>
+    </div>
+
+    <p>Remaining troops: <span id="remaining">10</span></p>
+    
+    <div class="buttons">
+      <button onclick="simulate()">Simulate Battle</button>
+      <button onclick="reset()" class="reset">Reset Game</button>
+    </div>
+
+    <div class="visualization">
+      <div class="battle">
+        <h3>Battle 1</h3>
+        <div class="troops">
+          <div class="player-troops">
+            <div class="troop-bar" id="p1"></div>
+          </div>
+          <div class="computer-troops">
+            <div class="troop-bar computer-bar" id="c1"></div>
+          </div>
+        </div>
+      </div>
+      <div class="battle">
+        <h3>Battle 2</h3>
+        <div class="troops">
+          <div class="player-troops">
+            <div class="troop-bar" id="p2"></div>
+          </div>
+          <div class="computer-troops">
+            <div class="troop-bar computer-bar" id="c2"></div>
+          </div>
+        </div>
+      </div>
+      <div class="battle">
+        <h3>Battle 3</h3>
+        <div class="troops">
+          <div class="player-troops">
+            <div class="troop-bar" id="p3"></div>
+          </div>
+          <div class="computer-troops">
+            <div class="troop-bar computer-bar" id="c3"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="result" class="result"></div>
+  </div>
+
+  <script>
+    const inputs = document.querySelectorAll('.troops-input');
+    const remaining = document.getElementById('remaining');
+
+    inputs.forEach(input => {
+      input.addEventListener('input', updateRemaining);
+    });
+
+    function updateRemaining() {
+      let total = 0;
+      inputs.forEach(input => {
+        total += parseInt(input.value) || 0;
+      });
+      remaining.textContent = 10 - total;
+    }
+
+    function reset() {
+      // Reset all inputs to 0
+      inputs.forEach(input => {
+        input.value = 0;
+      });
+      
+      // Reset remaining troops
+      remaining.textContent = 10;
+      
+      // Reset visualization bars
+      for (let i = 1; i <= 3; i++) {
+        document.getElementById(`p${i}`).style.height = '0px';
+        document.getElementById(`c${i}`).style.height = '0px';
+      }
+      
+      // Clear result
+      const resultDiv = document.getElementById('result');
+      resultDiv.textContent = '';
+      resultDiv.className = 'result';
+    }
+
+    function simulate() {
+      // Get player troops
+      let playerTroops = [];
+      let total = 0;
+      inputs.forEach(input => {
+        const value = parseInt(input.value) || 0;
+        playerTroops.push(value);
+        total += value;
+      });
+
+      if (total !== 10) {
+        alert('You must use exactly 10 troops!');
+        return;
+      }
+
+      // Generate computer troops (random strategy)
+      let computerTroops = generateComputerTroops();
+
+      // Visualize the battles
+      for (let i = 0; i < 3; i++) {
+        document.getElementById(`p${i+1}`).style.height = `${playerTroops[i] * 10}px`;
+        document.getElementById(`c${i+1}`).style.height = `${computerTroops[i] * 10}px`;
+      }
+
+      // Calculate results
+      let playerWins = 0;
+      let computerWins = 0;
+      let results = [];
+
+      for (let i = 0; i < 3; i++) {
+        if (playerTroops[i] > computerTroops[i]) {
+          playerWins++;
+          results.push(`Won battlefield ${i+1}`);
+        } else if (computerTroops[i] > playerTroops[i]) {
+          computerWins++;
+          results.push(`Lost battlefield ${i+1}`);
+        } else {
+          results.push(`Tied battlefield ${i+1}`);
+        }
+      }
+
+      // Display results
+      const resultDiv = document.getElementById('result');
+      let resultText = results.join('. ') + '. ';
+      
+      if (playerWins > computerWins) {
+        resultDiv.className = 'result win';
+        resultText += 'You won the battle!';
+      } else if (computerWins > playerWins) {
+        resultDiv.className = 'result lose';
+        resultText += 'You lost the battle!';
+      } else {
+        resultDiv.className = 'result tie';
+        resultText += 'The battle was a tie!';
+      }
+
+      resultDiv.textContent = resultText;
+    }
+
+    function generateComputerTroops() {
+      let troops = [0, 0, 0];
+      let remaining = 10;
+      
+      // Simple random strategy
+      for (let i = 0; i < 2; i++) {
+        const max = remaining - (2 - i);
+        const allocation = Math.floor(Math.random() * max);
+        troops[i] = allocation;
+        remaining -= allocation;
+      }
+      troops[2] = remaining;
+      
+      return troops;
+    }
+  </script>
+</body>
+</html>
