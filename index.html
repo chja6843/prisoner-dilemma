@@ -1,216 +1,267 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <style>
-    .card {
-      border: 1px solid #ccc;
-      padding: 20px;
-      margin: 20px;
-      border-radius: 8px;
-    }
-    
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-    
-    .player-box {
-      border: 1px solid #ddd;
-      padding: 15px;
-      border-radius: 4px;
-    }
-    
-    .button {
-      display: block;
-      width: 100%;
-      padding: 10px;
-      margin: 5px 0;
-      background-color: #2563eb;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    
-    .button:hover {
-      background-color: #1d4ed8;
-    }
-    
-    .result-box {
-      background-color: #f3f4f6;
-      padding: 15px;
-      border-radius: 4px;
-      margin: 10px 0;
-    }
-    
-    .payoff-matrix {
-      background-color: #dbeafe;
-      padding: 15px;
-      border-radius: 4px;
-      margin-top: 10px;
-    }
-    
-    .hidden {
-      display: none;
-    }
-  </style>
+    <style>
+        body {
+            font-family: system-ui;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .game-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .game-mode {
+            margin-bottom: 20px;
+        }
+        .player-section {
+            margin: 10px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .hidden {
+            display: none;
+        }
+        .result {
+            margin: 20px 0;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 4px;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .payoff-matrix {
+            margin: 20px 0;
+            border-collapse: collapse;
+        }
+        .payoff-matrix td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        .history {
+            margin-top: 20px;
+        }
+        .history-item {
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .score {
+            font-weight: bold;
+            margin: 10px 0;
+        }
+    </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Prisoner's Dilemma Simulation</h1>
-    
-    <div>
-      <button class="button" onclick="setGameMode('oneshot')">One-Shot Game</button>
-      <button class="button" onclick="setGameMode('iterative')">Iterative Game (5 rounds)</button>
-    </div>
-
-    <div class="grid">
-      <div class="player-box">
-        <h3>Player 1</h3>
-        <p>Score: <span id="player1-score">0</span></p>
-        <div id="player1-controls" class="hidden">
-          <button class="button" onclick="makeChoice('player1', 'defect')">Defect</button>
-          <button class="button" onclick="makeChoice('player1', 'cooperate')">Cooperate</button>
+    <div class="game-container">
+        <h1>Prisoner's Dilemma Simulation</h1>
+        
+        <div class="game-mode">
+            <h2>Select Game Mode:</h2>
+            <button onclick="setGameMode('oneshot')">One-Shot Game</button>
+            <button onclick="setGameMode('iterative')">Iterative Game (7 Rounds)</button>
         </div>
-      </div>
 
-      <div class="player-box">
-        <h3>Player 2</h3>
-        <p>Score: <span id="player2-score">0</span></p>
-        <div id="player2-controls" class="hidden">
-          <button class="button" onclick="makeChoice('player2', 'defect')">Defect</button>
-          <button class="button" onclick="makeChoice('player2', 'cooperate')">Cooperate</button>
+        <div class="payoff-matrix hidden" id="payoffMatrix">
+            <h3>Payoff Matrix:</h3>
+            <table>
+                <tr>
+                    <td></td>
+                    <td>Player 2 Cooperate</td>
+                    <td>Player 2 Defect</td>
+                </tr>
+                <tr>
+                    <td>Player 1 Cooperate</td>
+                    <td>P1: +3, P2: +3</td>
+                    <td>P1: 0, P2: +5</td>
+                </tr>
+                <tr>
+                    <td>Player 1 Defect</td>
+                    <td>P1: +5, P2: 0</td>
+                    <td>P1: +1, P2: +1</td>
+                </tr>
+            </table>
         </div>
-      </div>
+
+        <div id="gameArea" class="hidden">
+            <div id="player1Section" class="player-section">
+                <h3>Player 1's Turn</h3>
+                <button onclick="makeChoice(1, 'cooperate')">Cooperate</button>
+                <button onclick="makeChoice(1, 'defect')">Defect</button>
+            </div>
+
+            <div id="player2Section" class="player-section hidden">
+                <h3>Player 2's Turn</h3>
+                <button onclick="makeChoice(2, 'cooperate')">Cooperate</button>
+                <button onclick="makeChoice(2, 'defect')">Defect</button>
+            </div>
+
+            <div id="result" class="result hidden">
+                <h3>Round Results:</h3>
+                <div id="roundResult"></div>
+                <div id="scores" class="score"></div>
+                <div id="nextRound" class="hidden">
+                    <button onclick="nextRound()">Next Round</button>
+                </div>
+            </div>
+
+            <div id="history" class="history">
+                <h3>Game History:</h3>
+                <div id="historyList"></div>
+            </div>
+        </div>
     </div>
 
-    <div id="result" class="result-box hidden">
-      <h3>Round <span id="current-round">1</span> Results:</h3>
-      <p>Player 1 chose: <span id="player1-choice"></span></p>
-      <p>Player 2 chose: <span id="player2-choice"></span></p>
-      <button id="next-round" class="button hidden" onclick="nextRound()">Next Round</button>
-      <button id="play-again" class="button hidden" onclick="resetGame()">Play Again</button>
-    </div>
+    <script>
+        let gameMode = '';
+        let currentRound = 1;
+        let maxRounds = 7; // Changed to 7 rounds
+        let player1Choice = '';
+        let player2Choice = '';
+        let player1Score = 0;
+        let player2Score = 0;
+        let gameHistory = [];
 
-    <div id="history">
-      <h3>Game History:</h3>
-      <div id="history-list"></div>
-    </div>
+        function setGameMode(mode) {
+            gameMode = mode;
+            currentRound = 1;
+            player1Score = 0;
+            player2Score = 0;
+            gameHistory = [];
+            document.getElementById('gameArea').classList.remove('hidden');
+            document.getElementById('player1Section').classList.remove('hidden');
+            document.getElementById('player2Section').classList.add('hidden');
+            document.getElementById('result').classList.add('hidden');
+            document.getElementById('historyList').innerHTML = '';
+            document.getElementById('payoffMatrix').classList.add('hidden');
+            updateScores();
+        }
 
-    <div id="payoff-matrix" class="payoff-matrix hidden">
-      <h3>Payoff Matrix:</h3>
-      <p>Both Defect: (-10, -10)</p>
-      <p>Both Cooperate: (+10, +10)</p>
-      <p>P1 Defect, P2 Cooperate: (+20, -20)</p>
-      <p>P1 Cooperate, P2 Defect: (-20, +20)</p>
-    </div>
-  </div>
+        function makeChoice(player, choice) {
+            if (player === 1) {
+                player1Choice = choice;
+                document.getElementById('player1Section').classList.add('hidden');
+                document.getElementById('player2Section').classList.remove('hidden');
+            } else {
+                player2Choice = choice;
+                document.getElementById('player2Section').classList.add('hidden');
+                calculateResults();
+            }
+        }
 
-  <script>
-    let gameMode = 'oneshot';
-    let currentRound = 1;
-    const maxRounds = 5;
-    let player1Choice = null;
-    let player2Choice = null;
-    let scores = { player1: 0, player2: 0 };
-    let gameHistory = [];
-    let gameState = 'player1';
+        function calculateResults() {
+            let p1Points = 0;
+            let p2Points = 0;
 
-    const payoffMatrix = {
-      defect: {
-        defect: [-10, -10],
-        cooperate: [20, -20]
-      },
-      cooperate: {
-        defect: [-20, 20],
-        cooperate: [10, 10]
-      }
-    };
+            if (player1Choice === 'cooperate' && player2Choice === 'cooperate') {
+                p1Points = 3;
+                p2Points = 3;
+            } else if (player1Choice === 'cooperate' && player2Choice === 'defect') {
+                p1Points = 0;
+                p2Points = 5;
+            } else if (player1Choice === 'defect' && player2Choice === 'cooperate') {
+                p1Points = 5;
+                p2Points = 0;
+            } else {
+                p1Points = 1;
+                p2Points = 1;
+            }
 
-    function setGameMode(mode) {
-      gameMode = mode;
-      resetGame();
-    }
+            player1Score += p1Points;
+            player2Score += p2Points;
 
-    function resetGame() {
-      player1Choice = null;
-      player2Choice = null;
-      gameState = 'player1';
-      currentRound = 1;
-      scores = { player1: 0, player2: 0 };
-      gameHistory = [];
-      updateUI();
-    }
+            const roundResult = {
+                round: currentRound,
+                p1Choice: player1Choice,
+                p2Choice: player2Choice,
+                p1Points,
+                p2Points
+            };
+            gameHistory.push(roundResult);
 
-    function makeChoice(player, choice) {
-      if (player === 'player1') {
-        player1Choice = choice;
-        gameState = 'player2';
-      } else {
-        player2Choice = choice;
-        gameState = 'result';
-        
-        const p1Score = payoffMatrix[choice][player1Choice][1];
-        const p2Score = payoffMatrix[player1Choice][choice][0];
-        
-        scores.player1 += p1Score;
-        scores.player2 += p2Score;
-        
-        gameHistory.push({
-          round: currentRound,
-          player1: player1Choice,
-          player2: choice,
-          p1Score,
-          p2Score
-        });
-      }
-      updateUI();
-    }
+            showResults(roundResult);
+        }
 
-    function nextRound() {
-      if (gameMode === 'iterative' && currentRound < maxRounds) {
-        currentRound++;
-        player1Choice = null;
-        player2Choice = null;
-        gameState = 'player1';
-        updateUI();
-      }
-    }
+        function showResults(result) {
+            const resultDiv = document.getElementById('result');
+            const roundResultDiv = document.getElementById('roundResult');
+            
+            roundResultDiv.innerHTML = `
+                Round ${result.round}:<br>
+                Player 1 chose to ${result.p1Choice} and got ${result.p1Points} points<br>
+                Player 2 chose to ${result.p2Choice} and got ${result.p2Points} points
+            `;
 
-    function updateUI() {
-      // Update scores
-      document.getElementById('player1-score').textContent = scores.player1;
-      document.getElementById('player2-score').textContent = scores.player2;
-      
-      // Update controls visibility
-      document.getElementById('player1-controls').classList.toggle('hidden', gameState !== 'player1');
-      document.getElementById('player2-controls').classList.toggle('hidden', gameState !== 'player2');
-      
-      // Update result section
-      const resultDiv = document.getElementById('result');
-      resultDiv.classList.toggle('hidden', gameState !== 'result');
-      
-      if (gameState === 'result') {
-        document.getElementById('current-round').textContent = currentRound;
-        document.getElementById('player1-choice').textContent = player1Choice;
-        document.getElementById('player2-choice').textContent = player2Choice;
-        
-        const isGameOver = gameMode === 'oneshot' || currentRound === maxRounds;
-        document.getElementById('next-round').classList.toggle('hidden', isGameOver);
-        document.getElementById('play-again').classList.toggle('hidden', !isGameOver);
-        document.getElementById('payoff-matrix').classList.toggle('hidden', !isGameOver);
-      }
-      
-      // Update history
-      const historyList = document.getElementById('history-list');
-      historyList.innerHTML = gameHistory.map(round => 
-        `<div>Round ${round.round}: P1 ${round.player1} (${round.p1Score}), P2 ${round.player2} (${round.p2Score})</div>`
-      ).join('');
-    }
+            updateScores();
+            updateHistory();
 
-    // Initialize the game
-    resetGame();
-  </script>
+            resultDiv.classList.remove('hidden');
+            
+            if (gameMode === 'iterative' && currentRound < maxRounds) {
+                document.getElementById('nextRound').classList.remove('hidden');
+            } else {
+                document.getElementById('nextRound').classList.add('hidden');
+                showFinalResults();
+            }
+        }
+
+        function updateScores() {
+            document.getElementById('scores').innerHTML = `
+                Total Scores:<br>
+                Player 1: ${player1Score}<br>
+                Player 2: ${player2Score}
+            `;
+        }
+
+        function updateHistory() {
+            const historyList = document.getElementById('historyList');
+            const newEntry = document.createElement('div');
+            newEntry.className = 'history-item';
+            const lastResult = gameHistory[gameHistory.length - 1];
+            newEntry.innerHTML = `
+                Round ${lastResult.round}: 
+                P1 ${lastResult.p1Choice} (${lastResult.p1Points}), 
+                P2 ${lastResult.p2Choice} (${lastResult.p2Points})
+            `;
+            historyList.appendChild(newEntry);
+        }
+
+        function showFinalResults() {
+            const roundResultDiv = document.getElementById('roundResult');
+            document.getElementById('payoffMatrix').classList.remove('hidden');
+            roundResultDiv.innerHTML += `<br><br>Game Over!<br>
+                Final Scores:<br>
+                Player 1: ${player1Score}<br>
+                Player 2: ${player2Score}<br><br>
+                Now you can see the payoff matrix above that determined the points for each round.`;
+        }
+
+        function nextRound() {
+            currentRound++;
+            player1Choice = '';
+            player2Choice = '';
+            document.getElementById('result').classList.add('hidden');
+            document.getElementById('player1Section').classList.remove('hidden');
+        }
+    </script>
 </body>
 </html>
